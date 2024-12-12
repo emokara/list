@@ -77,22 +77,22 @@
         </thead>
         <tbody id="musicTable">
             <tr>
-                <td contenteditable="true" oninput="showAutocomplete(this, 'title')">Song A</td>
-                <td contenteditable="true" oninput="showAutocomplete(this, 'artist')">Artist 1</td>
+                <td contenteditable="true" onkeyup="showAutocomplete(this, 'title')">Song A</td>
+                <td contenteditable="true" onkeyup="showAutocomplete(this, 'artist')">Artist 1</td>
                 <td contenteditable="false">Album X</td>
                 <td contenteditable="false">2023</td>
                 <td><button onclick="deleteRow(this)">Delete</button></td>
             </tr>
             <tr>
-                <td contenteditable="true" oninput="showAutocomplete(this, 'title')">Song B</td>
-                <td contenteditable="true" oninput="showAutocomplete(this, 'artist')">Artist 2</td>
+                <td contenteditable="true" onkeyup="showAutocomplete(this, 'title')">Song B</td>
+                <td contenteditable="true" onkeyup="showAutocomplete(this, 'artist')">Artist 2</td>
                 <td contenteditable="false">Album Y</td>
                 <td contenteditable="false">2022</td>
                 <td><button onclick="deleteRow(this)">Delete</button></td>
             </tr>
             <tr>
-                <td contenteditable="true" oninput="showAutocomplete(this, 'title')">Song C</td>
-                <td contenteditable="true" oninput="showAutocomplete(this, 'artist')">Artist 3</td>
+                <td contenteditable="true" onkeyup="showAutocomplete(this, 'title')">Song C</td>
+                <td contenteditable="true" onkeyup="showAutocomplete(this, 'artist')">Artist 3</td>
                 <td contenteditable="false">Album Z</td>
                 <td contenteditable="false">2021</td>
                 <td><button onclick="deleteRow(this)">Delete</button></td>
@@ -144,22 +144,24 @@
                 const suggestions = (type === 'title' ? data.tracks.items : data.artists.items).map(item => {
                     const name = type === 'title' ? item.name : item.name;
                     const extra = type === 'title' ? ` - ${item.artists.map(artist => artist.name).join(', ')}` : '';
-                    return `<div onclick="selectSuggestion('${name}', ${type === 'title' ? `'${cell.id}'` : `'${cell.id}'`})">${name}${extra}</div>`;
+                    return `<div onclick="selectSuggestion('${name}', '${cell}')">${name}${extra}</div>`;
                 }).join('');
 
                 const suggestionBox = document.getElementById('titleSuggestions');
                 suggestionBox.innerHTML = suggestions;
                 suggestionBox.style.display = 'block';
-                suggestionBox.style.top = cell.offsetTop + cell.offsetHeight + 'px';
-                suggestionBox.style.left = cell.offsetLeft + 'px';
+
+                const rect = cell.getBoundingClientRect();
+                suggestionBox.style.top = `${window.scrollY + rect.bottom}px`;
+                suggestionBox.style.left = `${window.scrollX + rect.left}px`;
             } catch (error) {
                 console.error('Error fetching Spotify data:', error);
             }
         }
 
         // 候補を選択した際の処理
-        function selectSuggestion(value, cellId) {
-            document.getElementById(cellId).textContent = value;
+        function selectSuggestion(value, cell) {
+            cell.textContent = value;
             document.getElementById('titleSuggestions').style.display = 'none';
         }
 
@@ -198,8 +200,8 @@
             const newRow = table.insertRow();
 
             newRow.innerHTML = `
-                <td contenteditable="true" oninput="showAutocomplete(this, 'title')">New Title</td>
-                <td contenteditable="true" oninput="showAutocomplete(this, 'artist')">New Artist</td>
+                <td contenteditable="true" onkeyup="showAutocomplete(this, 'title')">New Title</td>
+                <td contenteditable="true" onkeyup="showAutocomplete(this, 'artist')">New Artist</td>
                 <td contenteditable="true">New Album</td>
                 <td contenteditable="true">New Year</td>
                 <td><button onclick="deleteRow(this)">Delete</button></td>
