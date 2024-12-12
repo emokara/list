@@ -104,7 +104,7 @@
         const SPOTIFY_CLIENT_SECRET = 'your-client-secret'; // Spotify Developer Dashboardから取得
         let spotifyAccessToken = null;
 
-        // アクセストークンを取得
+        // アクセストークンを自動的に取得し管理
         async function fetchSpotifyToken() {
             try {
                 const response = await fetch('https://accounts.spotify.com/api/token', {
@@ -120,6 +120,7 @@
                 if (data.access_token) {
                     spotifyAccessToken = data.access_token;
                     console.log('Spotify Access Token:', spotifyAccessToken); // デバッグ用
+                    setTimeout(fetchSpotifyToken, (data.expires_in - 60) * 1000); // トークンの有効期限が切れる1分前に更新
                 } else {
                     console.error('Failed to retrieve access token:', data);
                 }
@@ -222,21 +223,3 @@
 
         function addRow() {
             const table = document.getElementById('musicTable');
-            const newRow = table.insertRow();
-
-            newRow.innerHTML = `
-                <td contenteditable="true" onkeyup="showAutocomplete(this, 'title')">New Title</td>
-                <td contenteditable="true" onkeyup="showAutocomplete(this, 'artist')">New Artist</td>
-                <td contenteditable="true">New Album</td>
-                <td contenteditable="true">New Year</td>
-                <td><button onclick="deleteRow(this)">Delete</button></td>
-            `;
-        }
-
-        function deleteRow(button) {
-            const row = button.parentElement.parentElement;
-            row.parentElement.removeChild(row);
-        }
-    </script>
-</body>
-</html>
