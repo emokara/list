@@ -100,23 +100,32 @@
         </tbody>
     </table>
     <script>
-        const SPOTIFY_CLIENT_ID = '7b48774ba1e448ff886fc30840854de0'; // Spotify Developer Dashboardから取得
-        const SPOTIFY_CLIENT_SECRET = '969426dd02ff4a78a8ec121fb6f76b02'; // Spotify Developer Dashboardから取得
+        const SPOTIFY_CLIENT_ID = 'your-client-id'; // Spotify Developer Dashboardから取得
+        const SPOTIFY_CLIENT_SECRET = 'your-client-secret'; // Spotify Developer Dashboardから取得
         let spotifyAccessToken = null;
 
         // アクセストークンを取得
         async function fetchSpotifyToken() {
-            const response = await fetch('https://accounts.spotify.com/api/token', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'Authorization': 'Basic ' + btoa(`${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`),
-                },
-                body: 'grant_type=client_credentials',
-            });
+            try {
+                const response = await fetch('https://accounts.spotify.com/api/token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'Authorization': 'Basic ' + btoa(`${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`),
+                    },
+                    body: 'grant_type=client_credentials',
+                });
 
-            const data = await response.json();
-            spotifyAccessToken = data.access_token;
+                const data = await response.json();
+                if (data.access_token) {
+                    spotifyAccessToken = data.access_token;
+                    console.log('Spotify Access Token:', spotifyAccessToken); // デバッグ用
+                } else {
+                    console.error('Failed to retrieve access token:', data);
+                }
+            } catch (error) {
+                console.error('Error fetching Spotify token:', error);
+            }
         }
 
         // 曲名または歌手名を検索して候補を取得
@@ -139,12 +148,25 @@
                         'Authorization': `Bearer ${spotifyAccessToken}`,
                     },
                 });
-                const data = await response.json();
 
-                const suggestions = (type === 'title' ? data.tracks.items : data.artists.items).map(item => {
+                const data = await response.json();
+                console.log('Spotify API Response:', data); // デバッグ用
+
+                let items = [];
+                if (type === 'title' && data.tracks && data.tracks.items) {
+                    items = data.tracks.items;
+                } else if (type === 'artist' && data.artists && data.artists.items) {
+                    items = data.artists.items;
+                } else {
+                    console.warn('No results found for query:', query);
+                    document.getElementById('titleSuggestions').style.display = 'none';
+                    return;
+                }
+
+                const suggestions = items.map(item => {
                     const name = type === 'title' ? item.name : item.name;
                     const extra = type === 'title' ? ` - ${item.artists.map(artist => artist.name).join(', ')}` : '';
-                    return `<div onclick="selectSuggestion('${name}', '${cell}')">${name}${extra}</div>`;
+                    return `<div onclick="selectSuggestion('${name}', this.parentElement)">${name}${extra}</div>`;
                 }).join('');
 
                 const suggestionBox = document.getElementById('titleSuggestions');
@@ -160,9 +182,12 @@
         }
 
         // 候補を選択した際の処理
-        function selectSuggestion(value, cell) {
-            cell.textContent = value;
-            document.getElementById('titleSuggestions').style.display = 'none';
+        function selectSuggestion(value, suggestionBox) {
+            const activeCell = document.querySelector(`[contenteditable="true"]:focus`);
+            if (activeCell) {
+                activeCell.textContent = value;
+            }
+            suggestionBox.style.display = 'none';
         }
 
         function searchByTitle() {
